@@ -16,19 +16,30 @@ fn read_fastq(file_path: &str) -> Read {
         qual: Vec::<String>::new(),
     };
     let mut reading_sequences = true;
+    let mut sequences_read: u32 = 0;
+    let mut new_reading: bool = true;
+
     for (index, line) in read_to_string(file_path).unwrap().lines().enumerate() {
-        match index {
-            0 => read.id = line.to_owned(),
-            _ => {
-                if line == "+" {
-                    reading_sequences = false;
-                    continue;
-                }
-                if reading_sequences {
-                    read.seq.push(line.to_owned());
-                } else {
-                    read.qual.push(line.to_owned());
-                }
+        if sequences_read == 0 && new_reading {
+            read.id = line.to_owned();
+            new_reading = false;
+            reading_sequences= true;
+        } else {
+            println!("{sequences_read}");
+            if line == "+" {
+                reading_sequences = false;
+                continue;
+            }
+            if reading_sequences {
+                read.seq.push(line.to_owned());
+                sequences_read += 1;
+            } else {
+                read.qual.push(line.to_owned());
+                sequences_read-=1;
+            }
+
+            if sequences_read == 0 {
+                new_reading = true;
             }
         }
     }
@@ -37,7 +48,7 @@ fn read_fastq(file_path: &str) -> Read {
 
 
 fn main() {
-    let some_read = read_fastq("src/example_read.fq");
+    let some_read = read_fastq("example_read_2.fq");
     println!("Read the following:\n id:{} \n\t seq:{:?} \n\t qual:{:?}", 
         some_read.id,
         some_read.seq,
