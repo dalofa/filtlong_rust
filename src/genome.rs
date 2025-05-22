@@ -25,9 +25,7 @@ impl Sequence {
                     'G' => NucleoBase::Guanine { },
                     'A' => NucleoBase::Adenine { },
                     'T' => NucleoBase::Thymine { },
-                    _ => {
-                        return Err(format!("Error parsing sequence: {char} is not a valid nucleo base."));
-                    }
+                    _ => return Err(format!("Error parsing sequence: {char} is not a valid nucleo base.")),
                 }
             );
         }
@@ -74,12 +72,20 @@ pub struct Read {
     pub seq: Vec<String>,
     pub qual: Vec<String>
 }
+impl Read {
+    fn valid_read_lengths(&self) -> bool {
+        self.seq.len() == self.qual.len() 
+        && (0..self.seq.len()).all(|index| {
+            self.seq[index].chars().count() == self.qual[index].chars().count()
+        })
+    }
+}
 
 impl GenomeReading for Read {
     /// Validates a genome reading.
     fn validate(&self) -> bool {
         // The reading needs an equal amount of sequences and matching qualities
-        if self.seq.len() != self.qual.len() {
+        if !self.valid_read_lengths() {
             return false;
         }
         // ToDo: validate other requirements
