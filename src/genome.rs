@@ -67,6 +67,7 @@ impl TryFrom<Read> for GenomeRead {
     type Error = String;
 }
 
+#[derive(Clone,PartialEq,Debug)]
 pub struct Read {
     pub id: String,
     pub seq: Vec<String>,
@@ -78,6 +79,19 @@ impl Read {
         && (0..self.seq.len()).all(|index| {
             self.seq[index].chars().count() == self.qual[index].chars().count()
         })
+    }
+    pub fn new(id: String) -> Self {
+        Self { 
+            id: id, 
+            seq: Vec::<String>::new(), 
+            qual: Vec::<String>::new()
+        }
+    }
+    pub fn add_sequence(&mut self, seq: String) {
+        self.seq.push(seq);
+    }
+    pub fn add_quality(&mut self, qual: String) {
+        self.qual.push(qual);
     }
 }
 
