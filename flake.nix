@@ -1,30 +1,31 @@
-{ # https://ziap.github.io/blog/nixos-cross-compilation/
-  description = "A basic Rust flake";
-
+{
   inputs = {
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs.url = "nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: let
-    system = "x86_64-linux";
-    pkgs = import nixpkgs { inherit system; };
-  in {
-    devShell.${system} = pkgs.mkShell {
-      buildInputs = [
-        pkgs.rustup
+  outputs = { self, fenix, nixpkgs }: {
+    packages.x86_64-linux.default = fenix.packages.x86_64-linux.minimal.toolchain;
+    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ({ pkgs, ... }: {
+          nixpkgs.overlays = [ fenix.overlays.default ];
+          environment.systemPackages = [
+            (pkgs.fenix.complete.withComponents [
+              "cargo"
+              "clippy"
+              "rust-src"
+              "rustc"
+              "rustfmt"
+            ])
+            pkgs.rust-analyzer-nightly
+          ];
+        })
       ];
-
-      shellHook = ''
-        # Avoid polluting the home directory
-        export RUSTUP_HOME=$(pwd)/.rustup/
-        export CARGO_HOME=$(pwd)/.cargo/
-
-        # Use binaries installed with `cargo install`
-        export PATH=$PATH:$CARGO_HOME/bin
-
-        # Install and display the current toolchain
-        rustup show
-      '';
     };
   };
 }
